@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+
+            <a href="{{ url_for('recommend.recommend_home') }}" class="btn btn-link mb-3 p-0 text-decoration-none text-muted">
+                ← 返回推薦系統
+            </a>
+
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-body p-4 text-center">
+                    <h3 class="mb-4 fw-bold">ETF 深度重複性診斷報告</h3>
+
+                    <div class="row align-items-center mb-4">
+                        <div class="col-md-5">
+                            <div class="p-3 bg-light rounded shadow-sm">
+                                <h4 class="text-primary mb-0">{{ etf1_name }}</h4>
+                                <small class="text-muted">{{ etf1_type }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="h2 text-muted">VS</span>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="p-3 bg-light rounded shadow-sm">
+                                <h4 class="text-success mb-0">{{ etf2_name }}</h4>
+                                <small class="text-muted">{{ etf2_type }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mt-4">
+                        <div class="col-md-4 border-end">
+                            <h6 class="text-muted small">近三個月振幅相關性</h6>
+                            {% if amplitude_corr is not none %}
+                            <h2 class="fw-bold">{{ amplitude_corr }}</h2>
+                            {% if amplitude_corr > 0.6 %}
+                            <span class="badge bg-danger">高度同步 (風險集中)</span>
+                            {% elif amplitude_corr > 0.3 %}
+                            <span class="badge bg-warning text-dark">中度同步</span>
+                            {% else %}
+                            <span class="badge bg-success">低度同步 (分散性佳)</span>
+                            {% endif %}
+                            {% else %}
+                            <p class="text-danger">相關性資料不足</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4 border-end">
+                            <h6 class="text-muted small">成分股重疊權重總和</h6>
+                            <h2 class="fw-bold">{{ overlap_weight }}%</h2>
+                            <div class="progress mx-auto mb-2" style="width: 80%; height: 10px;">
+                                <div class="progress-bar {% if overlap_weight > 50 %}bg-danger{% else %}bg-info{% endif %}"
+                                    role="progressbar" style="width: {{ overlap_weight }}%"></div>
+                            </div>
+                            <small class="text-muted">（取兩者持股較小值之和）</small>
+                        </div>
+
+                        <div class="col-md-4">
+                            <h6 class="text-muted small">重疊強度指數 (OII)</h6>
+                            <h2 class="fw-bold {{ intensity_color }}">{{ final_intensity }}</h2>
+                            <div class="d-block">
+                                <small class="{{ intensity_color }} fw-bold">{{ intensity_label }}</small>
+                            </div>
+                            <small class="text-muted">（反映大權值股重疊程度）</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">共同持有的成分股明細</h5>
+                </div>
+                <div class="card-body">
+                    {% if overlap_details %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>公司名稱 (Yahoo 資料)</th>
+                                    <th class="text-center">{{ etf1_name }} 權重</th>
+                                    <th class="text-center">{{ etf2_name }} 權重</th>
+                                    <th class="text-center">風險重疊</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in overlap_details %}
+                                <tr>
+                                    <td class="fw-bold">{{ item.name }}</td>
+                                    <td class="text-center">{{ item.w1 }}%</td>
+                                    <td class="text-center">{{ item.w2 }}%</td>
+                                    <td class="text-center">
+                                        <span class="text-danger">
+                                            {{ item.w1 if item.w1 < item.w2 else item.w2 }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="lead">無</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">共同持股之產業曝險與明細</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if sector_analysis %}
+                        {% for sector in sector_analysis %}
+                        <div class="col-md-6 mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold">{{ sector.label }}</span>
+                                <span class="badge bg-primary rounded-pill">{{ sector.value }}%</span>
+                            </div>
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div class="progress-bar bg-primary shadow-sm" role="progressbar"
+                                    style="width: {{ sector.value }}%"></div>
+                            </div>
+                            <div class="small text-muted">
+                                重疊成分股：{{ sector.stock_list }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="col-12 text-center py-4">
+                            <p class="lead">無</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
